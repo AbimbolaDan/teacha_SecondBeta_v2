@@ -54,7 +54,7 @@ function Home() {
   const [name, setName] = useState<string | null>(null);
   const [sessions, setSessions] = useState<RecentSession[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showEncouragement, setShowEncouragement] = useState(encouragement === "1");
+  const [showEncouragement, setShowEncouragement] = useState(encouragement === "1" || encouragement === "thanks");
 
   useEffect(() => {
     if (!showEncouragement) return;
@@ -103,7 +103,9 @@ function Home() {
 
         {showEncouragement && (
           <div className="mt-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-foreground">
-            Great work today — every session brings you closer to mastering this. Keep it up!
+            {encouragement === "thanks"
+              ? "Thank you for completing the assessment — your answers help us understand how you're learning."
+              : "Great work today — every session brings you closer to mastering this. Keep it up!"}
           </div>
         )}
 

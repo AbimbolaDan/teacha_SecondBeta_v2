@@ -16,17 +16,22 @@ export async function validateTesterCode(input: {
   course: string;
   yearLevel: string;
   institution: string;
-}): Promise<{ ok: boolean }> {
+}): Promise<{ ok: boolean; profile: Record<string, unknown> | null }> {
   const data = inputSchema.parse(input);
 
   const { data: profile, error } = await supabase
     .from("tester_profiles")
-    .select("tester_code, is_active")
+    .select("*")
     .eq("tester_code", data.testerCode)
+    .eq("is_active", true)
     .maybeSingle();
 
-  if (error || !profile || !profile.is_active) {
-    return { ok: false };
+  if (error) {
+    console.error("Auth check error:", error);
+    return { ok: false, profile: null };
+  }
+  if (!profile) {
+    return { ok: false, profile: null };
   }
 
   const { error: updateError } = await supabase
@@ -40,23 +45,30 @@ export async function validateTesterCode(input: {
     .eq("tester_code", data.testerCode);
 
   if (updateError) {
+    console.error("Auth check error:", updateError);
     throw new Error("Could not save your details. Please try again.");
   }
 
-  return { ok: true };
+  return { ok: true, profile };
 }
 
 /** Checks whether a stored tester code is still valid and active. Queries Supabase directly from the client. */
 export async function checkStoredTesterCode(input: {
   testerCode: string;
-}): Promise<{ valid: boolean }> {
+}): Promise<{ valid: boolean; profile: Record<string, unknown> | null }> {
   const { testerCode } = z.object({ testerCode: z.string().trim().min(1) }).parse(input);
 
   const { data: profile, error } = await supabase
     .from("tester_profiles")
-    .select("tester_code, is_active")
+    .select("*")
     .eq("tester_code", testerCode)
+    .eq("is_active", true)
     .maybeSingle();
 
-  return { valid: !error && !!profile && profile.is_active };
+  if (error) {
+    console.error("Auth check error:", error);
+    return { valid: false, profile: null };
+  }
+
+  return { valid: !!profile, profile: profile ?? null };
 }

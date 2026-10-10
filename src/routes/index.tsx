@@ -46,7 +46,7 @@ function Onboarding() {
       setChecking(false);
       return;
     }
-    checkStoredTesterCode({ data: { testerCode: stored } })
+    checkStoredTesterCode({ testerCode: stored })
       .then((result) => {
         if (result.valid) {
           navigate({ to: "/home" });
@@ -64,7 +64,7 @@ function Onboarding() {
     setSubmitting(true);
     try {
       const result = await validateTesterCode({
-        data: { testerCode, name, course, yearLevel, institution },
+        testerCode, name, course, yearLevel, institution,
       });
       if (result.ok) {
         localStorage.setItem("teacha_tester_code", testerCode.trim());

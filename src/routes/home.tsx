@@ -70,7 +70,7 @@ function Home() {
     }
     (async () => {
       try {
-        const check = await checkStoredTesterCode({ data: { testerCode: stored } });
+        const check = await checkStoredTesterCode({ testerCode: stored });
         if (!check.valid) {
           localStorage.removeItem("teacha_tester_code");
           navigate({ to: "/" });

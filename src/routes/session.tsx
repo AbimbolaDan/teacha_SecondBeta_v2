@@ -87,14 +87,12 @@ function SessionPage() {
     setMessages((prev) => [...prev, studentMsg]);
     try {
       const res = await sendWunmiMessage({
-        data: {
-          testerCode,
-          sessionId,
-          sessionMode,
-          materialName: material.materialName,
-          materialContent: material.contentText,
-          history,
-        },
+        testerCode,
+        sessionId,
+        sessionMode,
+        materialName: material.materialName,
+        materialContent: material.contentText,
+        history,
       });
       setMessages((prev) => [
         ...prev,
@@ -121,14 +119,12 @@ function SessionPage() {
         content: m.content,
       }));
       const res = await sendWunmiMessage({
-        data: {
-          testerCode,
-          sessionId,
-          sessionMode,
-          materialName: material.materialName,
-          materialContent: material.contentText,
-          history,
-        },
+        testerCode,
+        sessionId,
+        sessionMode,
+        materialName: material.materialName,
+        materialContent: material.contentText,
+        history,
       });
       setMessages((prev) => [
         ...prev,

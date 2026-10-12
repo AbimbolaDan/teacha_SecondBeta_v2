@@ -1,5 +1,8 @@
-import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
+import { GoogleGenerativeAI, type Content } from "@google/generative-ai";
+import { supabase } from "@/integrations/supabase/client";
+import { buildSessionContext, GEMINI_MODEL, HISTORY_WINDOW } from "./wunmi.server";
+import { cleanWunmiResponse } from "./wunmi-clean";
+import { WUNMI_SYSTEM_PROMPT } from "./wunmi-prompt";
 
 const REDIRECT_PHRASES = [
   "skip this",
@@ -30,163 +33,201 @@ export function classifyStudentMessage(
   return { messageType, isStudentInitiated };
 }
 
-export const sendWunmiMessage = createServerFn({ method: "POST" })
-  .inputValidator((input) =>
-    z
-      .object({
-        testerCode: z.string().min(1),
-        sessionId: z.string().uuid().nullable().optional(),
-        sessionMode: z.enum(["learning", "study"]),
-        materialName: z.string(),
-        materialContent: z.string(),
-        // Full conversation so far, ending with the student's latest message.
-        history: z
-          .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() }))
-          .min(1),
-      })
-      .parse(input),
-  )
-  .handler(async ({ data }) => {
-    const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
-    const { buildSessionContext, callGemini } = await import("./wunmi.server");
+type SendWunmiInput = {
+  testerCode: string;
+  sessionId: string | null;
+  sessionMode: "learning" | "study";
+  materialName: string;
+  materialContent: string;
+  history: { role: "user" | "assistant"; content: string }[];
+};
 
-    const { data: profile } = await db
-      .from("tester_profiles")
-      .select("name, course, year_level, is_active")
-      .eq("tester_code", data.testerCode)
-      .maybeSingle();
-    if (!profile?.is_active) throw new Error("Invalid tester code");
+/**
+ * Client-side Wunmi message handler.
+ * Calls the Gemini API directly from the browser and persists messages via Supabase.
+ */
+export async function sendWunmiMessage(input: SendWunmiInput): Promise<{ reply: string }> {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) {
+    console.error("VITE_GEMINI_API_KEY is not configured");
+    throw new Error("Wunmi could not respond right now. Please try again.");
+  }
 
-    const sessionId = data.sessionId ?? null;
-    let previousAssistantContent: string | null = null;
-    let previousTimestamp: string | null = null;
+  // 1. Verify tester is active
+  const { data: profile, error: profileError } = await supabase
+    .from("tester_profiles")
+    .select("name, course, year_level, is_active")
+    .eq("tester_code", input.testerCode)
+    .maybeSingle();
+  if (profileError) console.error("Profile lookup error:", profileError);
+  if (!profile?.is_active) throw new Error("Your tester code is no longer active.");
 
-    if (sessionId) {
-      const { data: session } = await db
-        .from("sessions")
-        .select("session_id")
-        .eq("session_id", sessionId)
-        .eq("tester_code", data.testerCode)
-        .eq("status", "active")
-        .maybeSingle();
-      if (!session) throw new Error("This session is no longer active.");
+  const sessionId = input.sessionId ?? null;
+  let previousAssistantContent: string | null = null;
+  let previousTimestamp: string | null = null;
 
-      const { data: lastRows } = await db
-        .from("messages")
-        .select("role, content, timestamp")
-        .eq("session_id", sessionId)
-        .order("timestamp", { ascending: false })
-        .order("message_id", { ascending: false })
-        .limit(1);
-      const last = lastRows?.[0];
-      if (last) {
-        previousTimestamp = last.timestamp;
-        if (last.role === "assistant") previousAssistantContent = last.content;
-      }
-    }
-
-    // Persist the student's message with its behaviour metadata.
-    const studentContent = data.history[data.history.length - 1]!.content;
-    const { messageType, isStudentInitiated } = classifyStudentMessage(
-      studentContent,
-      previousAssistantContent,
-    );
-    const secondsSincePrevious = previousTimestamp
-      ? Math.max(0, Math.floor((Date.now() - Date.parse(previousTimestamp)) / 1000))
-      : null;
-
-    if (sessionId) {
-      const { error } = await db.from("messages").insert({
-        session_id: sessionId,
-        role: "user",
-        content: studentContent,
-        message_type: messageType,
-        is_student_initiated: isStudentInitiated,
-        seconds_since_previous: secondsSincePrevious,
-      });
-      if (error) console.error("student message insert failed", error);
-    }
-
-    const { data: sessions } = await db
+  if (sessionId) {
+    const { data: session, error: sessionError } = await supabase
       .from("sessions")
-      .select("session_id, confidence_rating, materials(name)")
-      .eq("tester_code", data.testerCode)
-      .eq("status", "completed")
-      .order("started_at", { ascending: false })
-      .limit(3);
-    const ids = (sessions ?? []).map((s) => s.session_id);
-    const { data: coverage } = ids.length
-      ? await db.from("concept_coverage").select("session_id, concept_name").in("session_id", ids)
-      : { data: [] as { session_id: string | null; concept_name: string }[] };
+      .select("session_id")
+      .eq("session_id", sessionId)
+      .eq("tester_code", input.testerCode)
+      .eq("status", "active")
+      .maybeSingle();
+    if (sessionError) console.error("Session check error:", sessionError);
+    if (!session) throw new Error("This session is no longer active.");
 
-    const pastSessions = (sessions ?? []).map((s) => ({
-      materialName: (s.materials as { name?: string } | null)?.name ?? "Untitled material",
-      confidenceRating: s.confidence_rating,
-      concepts: (coverage ?? []).filter((c) => c.session_id === s.session_id).map((c) => c.concept_name),
-    }));
+    const { data: lastRows, error: lastError } = await supabase
+      .from("messages")
+      .select("role, content, timestamp")
+      .eq("session_id", sessionId)
+      .order("timestamp", { ascending: false })
+      .order("message_id", { ascending: false })
+      .limit(1);
+    if (lastError) console.error("Last message lookup error:", lastError);
+    const last = lastRows?.[0];
+    if (last) {
+      previousTimestamp = last.timestamp;
+      if (last.role === "assistant") previousAssistantContent = last.content;
+    }
+  }
 
-    const ctx = buildSessionContext({
-      profile,
-      materialName: data.materialName,
-      materialContent: data.materialContent,
-      sessionMode: data.sessionMode,
-      pastSessions,
-      history: data.history,
+  // 2. Persist the student's message
+  const studentContent = input.history[input.history.length - 1]!.content;
+  const { messageType, isStudentInitiated } = classifyStudentMessage(
+    studentContent,
+    previousAssistantContent,
+  );
+  const secondsSincePrevious = previousTimestamp
+    ? Math.max(0, Math.floor((Date.now() - Date.parse(previousTimestamp)) / 1000))
+    : null;
+
+  if (sessionId) {
+    const { error: msgError } = await supabase.from("messages").insert({
+      session_id: sessionId,
+      role: "user",
+      content: studentContent,
+      message_type: messageType,
+      is_student_initiated: isStudentInitiated,
+      seconds_since_previous: secondsSincePrevious,
     });
+    if (msgError) console.error("Student message insert failed:", msgError);
+  }
 
-    let reply: string;
-    try {
-      reply = await callGemini(ctx);
-    } catch (e) {
-      console.error("Gemini call failed", e);
-      throw new Error("Wunmi could not respond right now. Please try again.");
-    }
+  // 3. Fetch past sessions for context
+  const { data: sessions, error: sessionsError } = await supabase
+    .from("sessions")
+    .select("session_id, confidence_rating, materials(material_name)")
+    .eq("tester_code", input.testerCode)
+    .eq("status", "completed")
+    .order("started_at", { ascending: false })
+    .limit(3);
+  if (sessionsError) console.error("Past sessions error:", sessionsError);
 
-    // Increment today's api_calls counter (upsert on date).
-    const today = new Date().toISOString().slice(0, 10);
-    const { data: usage } = await db.from("api_usage").select("api_calls").eq("date", today).maybeSingle();
-    await db
-      .from("api_usage")
-      .upsert({ date: today, api_calls: (usage?.api_calls ?? 0) + 1 }, { onConflict: "date" });
+  const ids = (sessions ?? []).map((s) => s.session_id);
+  let coverage: { session_id: string | null; concept_name: string }[] = [];
+  if (ids.length > 0) {
+    const { data: coverageData, error: coverageError } = await supabase
+      .from("concept_coverage")
+      .select("session_id, concept_name")
+      .in("session_id", ids);
+    if (coverageError) console.error("Coverage error:", coverageError);
+    coverage = coverageData ?? [];
+  }
 
-    // Clean markers, log misconceptions, store the assistant message.
-    const { cleanWunmiResponse } = await import("./wunmi-clean");
-    const cleaned = cleanWunmiResponse(reply);
-
-    if (sessionId && cleaned.misconception_concepts.length) {
-      const { error } = await db.from("misconception_events").insert(
-        cleaned.misconception_concepts.map((c) => ({
-          session_id: sessionId,
-          tester_code: data.testerCode,
-          misconception_concept: c,
-          wunmi_correction: cleaned.content,
-        })),
-      );
-      if (error) console.error("misconception insert failed", error);
-    }
-
-    if (sessionId) {
-      const { error } = await db.from("messages").insert({
-        session_id: sessionId,
-        role: "assistant",
-        content: cleaned.content,
-        feedback_tag: cleaned.feedback_tag,
-        verify_flag: cleaned.verify_flag,
-        predict_concept: cleaned.predict_concept,
-        page_reference: cleaned.page_reference,
-      });
-      if (error) console.error("message insert failed", error);
-
-      // Update the session's message count after the exchange.
-      const { count } = await db
-        .from("messages")
-        .select("message_id", { count: "exact", head: true })
-        .eq("session_id", sessionId);
-      await db
-        .from("sessions")
-        .update({ message_count: count ?? 0 })
-        .eq("session_id", sessionId);
-    }
-
-    return { reply: cleaned.content };
+  const pastSessions = (sessions ?? []).map((s) => {
+    const linkedMaterial = Array.isArray(s.materials) ? s.materials[0] : s.materials;
+    return {
+      materialName: linkedMaterial?.material_name ?? "Untitled material",
+      confidenceRating: s.confidence_rating,
+      concepts: coverage.filter((c) => c.session_id === s.session_id).map((c) => c.concept_name),
+    };
   });
+
+  // 4. Build context and call Gemini
+  const ctx = buildSessionContext({
+    profile: {
+      name: profile.name,
+      course: profile.course,
+      year_level: profile.year_level,
+    },
+    materialName: input.materialName,
+    materialContent: input.materialContent,
+    sessionMode: input.sessionMode,
+    pastSessions,
+    history: input.history,
+  });
+
+  let rawReply: string;
+  try {
+    const model = new GoogleGenerativeAI(apiKey).getGenerativeModel({
+      model: GEMINI_MODEL,
+      systemInstruction: WUNMI_SYSTEM_PROMPT,
+    });
+    const result = await model.generateContent({ contents: ctx.contents });
+    rawReply = result.response.text();
+  } catch (e) {
+    console.error("Gemini call failed:", e);
+    throw new Error("Wunmi could not respond right now. Please try again.");
+  }
+
+  if (!rawReply || !rawReply.trim()) {
+    console.error("Gemini returned empty response");
+    throw new Error("Wunmi could not respond right now. Please try again.");
+  }
+
+  // 5. Clean and persist the assistant reply
+  const cleaned = cleanWunmiResponse(rawReply);
+
+  if (sessionId && cleaned.misconception_concepts.length) {
+    const { error: misError } = await supabase.from("misconception_events").insert(
+      cleaned.misconception_concepts.map((c) => ({
+        session_id: sessionId,
+        tester_code: input.testerCode,
+        misconception_concept: c,
+        wunmi_correction: cleaned.content,
+      })),
+    );
+    if (misError) console.error("Misconception insert failed:", misError);
+  }
+
+  if (sessionId) {
+    const { error: msgError } = await supabase.from("messages").insert({
+      session_id: sessionId,
+      role: "assistant",
+      content: cleaned.content,
+      feedback_tag: cleaned.feedback_tag,
+      verify_flag: cleaned.verify_flag,
+      predict_concept: cleaned.predict_concept,
+      page_reference: cleaned.page_reference,
+    });
+    if (msgError) console.error("Message insert failed:", msgError);
+
+    const { count, error: countError } = await supabase
+      .from("messages")
+      .select("message_id", { count: "exact", head: true })
+      .eq("session_id", sessionId);
+    if (countError) console.error("Message count error:", countError);
+    await supabase
+      .from("sessions")
+      .update({ message_count: count ?? 0 })
+      .eq("session_id", sessionId);
+  }
+
+  // 6. Increment API usage counter
+  const today = new Date().toISOString().slice(0, 10);
+  const { data: usage } = await supabase
+    .from("api_usage")
+    .select("api_calls")
+    .eq("date", today)
+    .maybeSingle();
+  await supabase
+    .from("api_usage")
+    .upsert({ date: today, api_calls: (usage?.api_calls ?? 0) + 1 }, { onConflict: "date" });
+
+  return { reply: cleaned.content };
+}
+
+// Re-export for any external consumers
+export { GEMINI_MODEL, HISTORY_WINDOW, buildSessionContext };
+export type { Content };

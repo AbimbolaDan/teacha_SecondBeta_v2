@@ -47,7 +47,7 @@ type SendWunmiInput = {
  * Calls the Gemini API directly from the browser and persists messages via Supabase.
  */
 export async function sendWunmiMessage(input: SendWunmiInput): Promise<{ reply: string }> {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== "undefined" ? process.env.GEMINI_API_KEY : undefined);
   if (!apiKey) {
     console.error("VITE_GEMINI_API_KEY is not configured");
     throw new Error("Wunmi could not respond right now. Please try again.");

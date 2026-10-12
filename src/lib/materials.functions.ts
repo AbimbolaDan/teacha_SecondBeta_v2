@@ -30,7 +30,7 @@ export const transcribeImage = createServerFn({ method: "POST" })
     const key = process.env["GEMINI_API_KEY"];
     if (!key) return { ok: false as const, error: "Image reading is not configured." };
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

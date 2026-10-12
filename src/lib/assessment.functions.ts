@@ -84,7 +84,7 @@ export const generateAssessment = createServerFn({ method: "POST" })
     const key = process.env["GEMINI_API_KEY"];
     if (!key) throw new Error("The assessment service is not configured.");
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const model = new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-3.0-flash" });
     const context = [
       materialText ? `Uploaded material:\n${materialText.slice(0, 20000)}` : null,
       `Session transcript:\n${transcript}`,
@@ -125,7 +125,7 @@ export const submitAssessmentAnswer = createServerFn({ method: "POST" })
     const key = process.env["GEMINI_API_KEY"];
     if (!key) throw new Error("The assessment service is not configured.");
     const { GoogleGenerativeAI } = await import("@google/generative-ai");
-    const model = new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-3.0-flash" });
     const result = await model.generateContent(
       `Question: ${data.question}\n\nStudent's answer: ${data.answer}\n\n${EVALUATION_PROMPT}`,
     );

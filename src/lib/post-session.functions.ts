@@ -63,7 +63,7 @@ export const processSessionEnd = createServerFn({ method: "POST" })
           const transcript = messages
             .map((m) => `${m.role === "assistant" ? "Wunmi" : "Student"}: ${m.content}`)
             .join("\n\n");
-          const model = new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-2.5-flash" });
+          const model = new GoogleGenerativeAI(key).getGenerativeModel({ model: "gemini-3.0-flash" });
           const result = await model.generateContent(
             `Here is the full transcript of a tutoring session:\n\n${transcript}\n\n${CONCEPT_PROMPT}`,
           );

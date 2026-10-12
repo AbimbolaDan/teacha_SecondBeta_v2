@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI, type Content } from "@google/generative-ai";
 import { WUNMI_SYSTEM_PROMPT } from "./wunmi-prompt";
 
-export const GEMINI_MODEL = "gemini-3.0-flash";
+export const GEMINI_MODEL = "gemini-2.5-flash"
 export const HISTORY_WINDOW = 15;
 
 export type TesterProfile = {

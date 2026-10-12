@@ -39,7 +39,7 @@ function ConfidencePage() {
     setError(null);
     try {
       const { groupAssignment } = await setConfidence({
-        data: { testerCode, sessionId, confidenceRating: value },
+        testerCode, sessionId, confidenceRating: value,
       });
       // Background post-session processing; does not block navigation.
       void processSessionEnd({ data: { testerCode, sessionId } }).catch(() => {});

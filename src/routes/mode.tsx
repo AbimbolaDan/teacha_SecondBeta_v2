@@ -44,7 +44,7 @@ function ModePage() {
     setError(null);
     try {
       const res = await startSession({
-        data: { testerCode, materialId: material.materialId, sessionMode },
+        testerCode, materialId: material.materialId, sessionMode,
       });
       localStorage.setItem(CURRENT_SESSION_KEY, res.sessionId);
       sessionStorage.setItem(SESSION_MATERIAL_KEY, JSON.stringify(material));

@@ -61,7 +61,7 @@ function SessionPage() {
     const fallback = raw ? (JSON.parse(raw) as PendingMaterial) : undefined;
     setSessionId(sid);
 
-    getSessionChat({ data: { testerCode, sessionId: sid, fallbackMaterial: fallback } })
+    getSessionChat({ testerCode, sessionId: sid, fallbackMaterial: fallback })
       .then((res) => {
         setMaterial(res.session.material);
         setSessionMode(res.session.sessionMode);
@@ -135,7 +135,7 @@ function SessionPage() {
         { id: `local-a-${Date.now()}`, role: "assistant", content: res.reply },
       ]);
 
-      await endSession({ data: { testerCode, sessionId } });
+      await endSession({ testerCode, sessionId });
       localStorage.removeItem(CURRENT_SESSION_KEY);
       sessionStorage.removeItem(SESSION_MATERIAL_KEY);
       navigate({ to: "/confidence", search: { sessionId } });

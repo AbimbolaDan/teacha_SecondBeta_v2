@@ -79,7 +79,7 @@ function UploadPage() {
       else {
         const base64 = await fileToBase64(file);
         const mimeType = (file.type || "image/jpeg") as "image/jpeg" | "image/png" | "image/webp";
-        const res = await transcribeImage({ data: { testerCode: code!, mimeType, base64 } });
+        const res = await transcribeImage({ testerCode: code!, mimeType, base64 });
         if (!res.ok) throw new Error(res.error);
         text = res.text;
       }
@@ -103,7 +103,7 @@ function UploadPage() {
     setStep("library");
     if (library || !code) return;
     try {
-      const res = await listMaterials({ data: { testerCode: code } });
+      const res = await listMaterials({ testerCode: code });
       setLibrary(res.materials);
     } catch {
       setError("Could not load your library.");
@@ -126,13 +126,14 @@ function UploadPage() {
       let materialId: string | null = null;
       if (save) {
         const res = await saveMaterial({
-          data: { testerCode: code, materialName: name, contentText: material.contentText, uploadType: material.uploadType, wordCount: material.wordCount },
+          testerCode: code, materialName: name, contentText: material.contentText, uploadType: material.uploadType, wordCount: material.wordCount,
         });
         materialId = res.materialId;
       }
       goToMode({ ...material, materialName: name, materialId });
-    } catch {
-      setError("Could not save to your library. Please try again.");
+    } catch (e) {
+      console.error("Material save error:", e);
+      setError(e instanceof Error ? e.message : "Could not save to your library. Please try again.");
       setBusy(false);
     }
   }

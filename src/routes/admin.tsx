@@ -159,7 +159,7 @@ function Dashboard({ onLogout }: { onLogout: () => void }) {
   return (
     <main className="min-h-screen bg-background">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-5 py-3">
-        <h1 className="text-lg font-bold text-foreground">Teacha Admin</h1>
+        <h1 className="text-lg font-bold text-foreground font-heading">Teacha Admin</h1>
         <button
           type="button"
           onClick={onLogout}
@@ -325,7 +325,7 @@ function SessionRow({
   return (
     <div
       className={`rounded-lg border bg-card overflow-hidden transition-shadow ${
-        s.has_uncertain ? "border-l-4 border-l-red-500" : "border-border"
+        s.has_uncertain ? "border-l-4 border-l-destructive" : "border-border"
       }`}
     >
       <button
@@ -344,7 +344,7 @@ function SessionRow({
             <p className="truncate text-xs text-muted-foreground">{s.material_name ?? "No material"}</p>
           </div>
           <div>
-            <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
+            <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white ${s.session_mode === "study" ? "bg-accent" : "bg-primary"}`}>
               {s.session_mode === "study" ? "Study" : s.session_mode === "learning" ? "Learning" : s.session_mode ?? "—"}
             </span>
           </div>
@@ -361,7 +361,7 @@ function SessionRow({
               </span>
             )}
             {s.has_predict && (
-              <span className="inline-block rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
+              <span className="inline-block rounded-full bg-primary/20 px-2 py-0.5 text-xs font-medium text-primary">
                 Predictive flag
               </span>
             )}
@@ -438,12 +438,12 @@ function MessageRow({ message: m }: { message: AdminMessage }) {
             </span>
           )}
           {m.verify_flag === "uncertain" && (
-            <span className="inline-block rounded bg-red-600 px-2 py-0.5 text-xs font-medium text-white">
+            <span className="inline-block rounded bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground">
               Verify: uncertain
             </span>
           )}
           {m.predict_concept && (
-            <span className="inline-block rounded bg-teal-600 px-2 py-0.5 text-xs font-medium text-white">
+            <span className="inline-block rounded bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">
               Predicted difficulty: {m.predict_concept}
             </span>
           )}
@@ -479,12 +479,12 @@ function UsageTab() {
   return (
     <div>
       {todayCalls > 1400 && (
-        <div className="mb-4 rounded-lg bg-red-600 px-4 py-3 text-sm font-semibold text-white">
+        <div className="mb-4 rounded-lg bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground">
           Critical: today's API calls ({todayCalls.toLocaleString()}) exceed 1,400. Consider pausing sessions.
         </div>
       )}
       {todayCalls > 1200 && todayCalls <= 1400 && (
-        <div className="mb-4 rounded-lg bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-900">
+        <div className="mb-4 rounded-lg bg-accent/20 px-4 py-3 text-sm font-semibold text-accent-foreground">
           Warning: today's API calls ({todayCalls.toLocaleString()}) exceed 1,200. Monitor usage closely.
         </div>
       )}
@@ -505,8 +505,8 @@ function UsageTab() {
                 <td className="px-4 py-2.5 text-foreground">{r.date}</td>
                 <td className="px-4 py-2.5 text-foreground">
                   {(r.api_calls ?? 0).toLocaleString()}
-                  {(r.api_calls ?? 0) > 1400 && <span className="ml-2 text-red-600">●</span>}
-                  {(r.api_calls ?? 0) > 1200 && (r.api_calls ?? 0) <= 1400 && <span className="ml-2 text-amber-600">●</span>}
+                  {(r.api_calls ?? 0) > 1400 && <span className="ml-2 text-destructive">●</span>}
+                  {(r.api_calls ?? 0) > 1200 && (r.api_calls ?? 0) <= 1400 && <span className="ml-2 text-accent">●</span>}
                 </td>
                 <td className="px-4 py-2.5 text-foreground">{(r.concept_extraction_calls ?? 0).toLocaleString()}</td>
                 <td className="px-4 py-2.5 text-foreground">{(r.assessment_generation_calls ?? 0).toLocaleString()}</td>

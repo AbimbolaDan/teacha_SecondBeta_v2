@@ -241,7 +241,7 @@ function UploadPage() {
             />
             <p className="mt-4 text-foreground"><span className="font-semibold">{material.wordCount.toLocaleString()}</span> words</p>
             {material.wordCount > 8000 && (
-              <p className="mt-3 rounded-lg bg-amber-100 px-4 py-3 text-sm text-amber-900">
+              <p className="mt-3 rounded-lg bg-accent/15 px-4 py-3 text-sm text-accent-foreground">
                 This section is quite long. Sessions work best with 10 to 20 pages at a time. You can continue or upload a smaller section.
               </p>
             )}

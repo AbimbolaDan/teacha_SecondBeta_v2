@@ -81,7 +81,7 @@ function AssessmentPage() {
   return (
     <main className="flex min-h-screen flex-col items-center bg-background px-5 py-10">
       <div className="w-full max-w-xl">
-        <h1 className="text-center text-2xl font-bold text-foreground">Quick Assessment</h1>
+        <h1 className="text-center text-2xl font-bold text-foreground font-heading">Quick Assessment</h1>
 
         {stage.kind === "loading" && (
           <div className="mt-16 flex flex-col items-center gap-3 text-muted-foreground">
@@ -98,7 +98,7 @@ function AssessmentPage() {
             <button
               type="button"
               onClick={() => navigate({ to: "/home", search: { encouragement: "thanks" } })}
-              className="mt-6 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground"
+              className="mt-6 rounded-xl bg-primary px-6 py-3 font-semibold text-primary-foreground font-heading"
             >
               Back to Home
             </button>
@@ -137,7 +137,7 @@ function AssessmentPage() {
                 type="button"
                 onClick={() => void submit(stage.questions)}
                 disabled={submitting || !answer.trim()}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 font-semibold text-primary-foreground transition-opacity disabled:opacity-50"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-4 font-semibold text-primary-foreground transition-opacity disabled:opacity-50 font-heading"
               >
                 {submitting && <Loader2 className="h-5 w-5 animate-spin" />}
                 Submit Answer
@@ -146,7 +146,7 @@ function AssessmentPage() {
               <button
                 type="button"
                 onClick={() => next(stage.questions)}
-                className="mt-4 w-full rounded-2xl bg-primary px-6 py-4 font-semibold text-primary-foreground"
+                className="mt-4 w-full rounded-2xl bg-primary px-6 py-4 font-semibold text-primary-foreground font-heading"
               >
                 {index + 1 >= stage.questions.length ? "Finish" : "Next Question"}
               </button>

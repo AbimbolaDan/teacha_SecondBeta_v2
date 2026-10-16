@@ -41,15 +41,15 @@ const CONFIDENCE_LABELS: Record<string, string> = {
 };
 
 const CONFIDENCE_COLORS: Record<string, string> = {
-  still_confused: "bg-red-100 text-red-800",
-  getting_there: "bg-amber-100 text-amber-800",
-  i_get_it: "bg-green-100 text-green-800",
+  still_confused: "bg-accent/20 text-accent-foreground",
+  getting_there: "bg-primary/15 text-primary",
+  i_get_it: "bg-primary/20 text-primary",
 };
 
 const FEEDBACK_COLORS: Record<string, string> = {
-  correct: "bg-green-100 text-green-800",
-  partial: "bg-amber-100 text-amber-800",
-  needs_work: "bg-red-100 text-red-800",
+  correct: "bg-primary/20 text-primary",
+  partial: "bg-accent/20 text-accent-foreground",
+  needs_work: "bg-destructive/15 text-destructive",
 };
 
 function fmtDate(iso: string): string {
@@ -122,7 +122,7 @@ function PasswordGate({ onAuth }: { onAuth: () => void }) {
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center">
           <Lock className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Admin Access</h1>
+          <h1 className="text-2xl font-bold text-foreground font-heading">Admin Access</h1>
         </div>
         <p className="mt-2 text-center text-sm text-muted-foreground">
           Enter the admin password to continue.

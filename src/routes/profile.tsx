@@ -26,9 +26,9 @@ export const Route = createFileRoute("/profile")({
 });
 
 const CONFIDENCE_STYLES: Record<string, { label: string; className: string }> = {
-  still_confused: { label: "Still Confused", className: "bg-amber-100 text-amber-800" },
-  getting_there: { label: "Getting There", className: "bg-teal-100 text-teal-800" },
-  i_get_it: { label: "I Get It", className: "bg-green-100 text-green-800" },
+  still_confused: { label: "Still Confused", className: "bg-accent/20 text-accent-foreground" },
+  getting_there: { label: "Getting There", className: "bg-primary/15 text-primary" },
+  i_get_it: { label: "I Get It", className: "bg-primary/20 text-primary" },
 };
 
 function ConfidenceBadge({ rating }: { rating: string | null }) {
@@ -124,7 +124,7 @@ function Profile() {
         {/* Section 1: Profile */}
         {profile && (
           <section className="rounded-2xl border border-border bg-card p-5">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">{profile.name}</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground font-heading">{profile.name}</h1>
             <p className="mt-1 text-sm text-muted-foreground">{profile.course}</p>
             <p className="text-sm text-muted-foreground">
               {profile.year_level}
@@ -157,11 +157,9 @@ function Profile() {
                   <div className="mt-2 flex flex-wrap items-center gap-2">
                     {s.session_mode && (
                       <span
-                        className="inline-block rounded-full px-2.5 py-0.5 text-xs font-medium text-white"
-                        style={{
-                          backgroundColor:
-                            s.session_mode === "learning" ? "#0D9488" : "#C8973A",
-                        }}
+                        className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${
+                          s.session_mode === "learning" ? "bg-primary" : "bg-accent"
+                        }`}
                       >
                         {s.session_mode === "learning" ? "Learning" : "Study"}
                       </span>
@@ -195,14 +193,13 @@ function Profile() {
               {materials.map((m) => (
                 <div key={m.material_id}>
                   <p className="mb-1.5 text-sm font-medium text-foreground">{m.material_name}</p>
-                  <div className="h-6 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div className="h-6 w-full overflow-hidden rounded-full bg-muted">
                     {m.concepts.length > 0 && (
                       <div className="flex h-full">
                         {m.concepts.map((_, i) => (
                           <div
                             key={i}
-                            className="h-full flex-1"
-                            style={{ backgroundColor: "#0D9488" }}
+                            className="h-full flex-1 bg-primary"
                           />
                         ))}
                       </div>
@@ -232,17 +229,17 @@ function Profile() {
       </div>
 
       {/* Bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 border-t border-border bg-background">
+      <nav className="fixed inset-x-0 bottom-0 bg-ink">
         <div className="mx-auto flex max-w-lg items-center justify-around py-2">
-          <Link to="/home" className="flex flex-col items-center gap-1 px-4 py-1 text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/home" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper/60 transition-colors hover:text-paper">
             <HomeIcon className="h-5 w-5" />
             <span className="text-xs font-medium">Home</span>
           </Link>
-          <Link to="/library" className="flex flex-col items-center gap-1 px-4 py-1 text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/library" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper/60 transition-colors hover:text-paper">
             <LibraryIcon className="h-5 w-5" />
             <span className="text-xs font-medium">Library</span>
           </Link>
-          <Link to="/profile" className="flex flex-col items-center gap-1 px-4 py-1 text-primary">
+          <Link to="/profile" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper">
             <User className="h-5 w-5" />
             <span className="text-xs font-medium">Profile</span>
           </Link>

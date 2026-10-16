@@ -21,9 +21,9 @@ export const Route = createFileRoute("/confidence")({
 });
 
 const OPTIONS = [
-  { value: "still_confused" as const, label: "Still Confused", bg: "#D97706", hover: "#B45309" },
-  { value: "getting_there" as const, label: "Getting There", bg: "#5EBFB5", hover: "#3DA89D" },
-  { value: "i_get_it" as const, label: "I Get It", bg: "#16A34A", hover: "#15803D" },
+  { value: "still_confused" as const, label: "Still Confused", bg: "bg-accent", hover: "hover:bg-accent/90" },
+  { value: "getting_there" as const, label: "Getting There", bg: "bg-primary", hover: "hover:bg-primary/90" },
+  { value: "i_get_it" as const, label: "I Get It", bg: "bg-primary", hover: "hover:bg-primary/90" },
 ];
 
 function ConfidencePage() {
@@ -57,7 +57,7 @@ function ConfidencePage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-5">
       <div className="w-full max-w-md">
-        <h1 className="text-center text-2xl font-bold text-foreground">
+        <h1 className="text-center text-2xl font-bold text-foreground font-heading">
           How do you feel about this material now?
         </h1>
         <div className="mt-8 flex flex-col gap-4">
@@ -67,10 +67,7 @@ function ConfidencePage() {
               type="button"
               onClick={() => void choose(opt.value)}
               disabled={saving !== null}
-              style={{ backgroundColor: opt.bg }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = opt.hover)}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = opt.bg)}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-5 text-lg font-semibold text-white shadow-sm transition-colors disabled:opacity-60"
+              className={`flex w-full items-center justify-center gap-2 rounded-2xl px-6 py-5 text-lg font-semibold text-white shadow-sm transition-colors disabled:opacity-60 ${opt.bg} ${opt.hover}`}
             >
               {saving === opt.value && <Loader2 className="h-5 w-5 animate-spin" />}
               {opt.label}

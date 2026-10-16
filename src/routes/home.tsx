@@ -28,9 +28,9 @@ function nigeriaGreeting(): string {
 }
 
 const CONFIDENCE_STYLES: Record<string, { label: string; className: string }> = {
-  still_confused: { label: "Still confused", className: "bg-amber-100 text-amber-800" },
-  getting_there: { label: "Getting there", className: "bg-teal-100 text-teal-800" },
-  i_get_it: { label: "I get it", className: "bg-green-100 text-green-800" },
+  still_confused: { label: "Still confused", className: "bg-accent/20 text-accent-foreground" },
+  getting_there: { label: "Getting there", className: "bg-primary/15 text-primary" },
+  i_get_it: { label: "I get it", className: "bg-primary/20 text-primary" },
 };
 
 function ConfidenceBadge({ rating }: { rating: string | null }) {
@@ -96,7 +96,7 @@ function Home() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto w-full max-w-lg px-4 pt-10">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">
           {nigeriaGreeting()}{name ? `, ${name}` : ""}
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">Ready to keep learning?</p>
@@ -112,7 +112,7 @@ function Home() {
         <button
           type="button"
           onClick={() => navigate({ to: "/upload" })}
-          className="mt-6 w-full rounded-xl bg-primary px-4 py-4 text-lg font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="mt-6 w-full rounded-xl bg-primary px-4 py-4 text-lg font-semibold text-primary-foreground transition-colors hover:bg-primary/90 font-heading"
         >
           Start New Session
         </button>
@@ -130,15 +130,15 @@ function Home() {
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {lastSession.session_mode && (
-                  <span className="rounded-full bg-secondary px-2.5 py-0.5 text-xs font-medium text-secondary-foreground">
-                    {lastSession.session_mode}
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium text-white ${lastSession.session_mode === "learning" ? "bg-primary" : "bg-accent"}`}>
+                    {lastSession.session_mode === "learning" ? "Learning" : "Study"}
                   </span>
                 )}
                 <ConfidenceBadge rating={lastSession.confidence_rating} />
               </div>
               <button
                 type="button"
-                className="mt-4 w-full rounded-lg border border-primary px-4 py-2.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
+                className="mt-4 w-full rounded-lg border border-primary px-4 py-3 text-sm font-semibold text-primary transition-colors hover:bg-primary/10"
               >
                 Continue
               </button>
@@ -169,8 +169,8 @@ function Home() {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {s.session_mode && (
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">
-                        {s.session_mode}
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-medium text-white ${s.session_mode === "learning" ? "bg-primary" : "bg-accent"}`}>
+                        {s.session_mode === "learning" ? "Learning" : "Study"}
                       </span>
                     )}
                     <ConfidenceBadge rating={s.confidence_rating} />
@@ -182,17 +182,17 @@ function Home() {
         )}
       </div>
 
-      <nav className="fixed inset-x-0 bottom-0 border-t border-border bg-background">
+      <nav className="fixed inset-x-0 bottom-0 bg-ink">
         <div className="mx-auto flex max-w-lg items-center justify-around py-2">
-          <Link to="/home" className="flex flex-col items-center gap-1 px-4 py-1 text-primary">
+          <Link to="/home" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper">
             <HomeIcon className="h-5 w-5" />
             <span className="text-xs font-medium">Home</span>
           </Link>
-          <Link to="/library" className="flex flex-col items-center gap-1 px-4 py-1 text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/library" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper/60 transition-colors hover:text-paper">
             <LibraryIcon className="h-5 w-5" />
             <span className="text-xs font-medium">Library</span>
           </Link>
-          <Link to="/profile" className="flex flex-col items-center gap-1 px-4 py-1 text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/profile" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper/60 transition-colors hover:text-paper">
             <User className="h-5 w-5" />
             <span className="text-xs font-medium">Profile</span>
           </Link>

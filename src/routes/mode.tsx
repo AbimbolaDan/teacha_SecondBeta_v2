@@ -62,7 +62,7 @@ function ModePage() {
     <main className="min-h-screen bg-background px-5 py-8">
       <div className="mx-auto max-w-3xl">
         <Link to="/upload" className="text-sm text-muted-foreground hover:text-foreground">← Back</Link>
-        <h1 className="mt-4 text-3xl font-bold text-foreground">How do you want to study?</h1>
+        <h1 className="mt-4 text-3xl font-bold text-foreground font-heading">How do you want to study?</h1>
         <p className="mt-2 text-muted-foreground">
           {material.materialName} · {material.wordCount.toLocaleString()} words
         </p>
@@ -72,7 +72,7 @@ function ModePage() {
         <div className="mt-8 grid gap-5 md:grid-cols-2">
           <div className="flex flex-col rounded-2xl border border-border bg-card p-6">
             <GraduationCap className="h-10 w-10 text-primary" />
-            <h2 className="mt-4 text-2xl font-bold text-foreground">Learning Mode</h2>
+            <h2 className="mt-4 text-2xl font-bold text-foreground font-heading">Learning Mode</h2>
             <p className="mt-2 flex-1 text-muted-foreground">
               Wunmi teaches you through your material, step by step.
             </p>
@@ -87,8 +87,8 @@ function ModePage() {
           </div>
 
           <div className="flex flex-col rounded-2xl border border-border bg-card p-6">
-            <BookOpen className="h-10 w-10 text-primary" />
-            <h2 className="mt-4 text-2xl font-bold text-foreground">Study Mode</h2>
+            <BookOpen className="h-10 w-10 text-accent" />
+            <h2 className="mt-4 text-2xl font-bold text-foreground font-heading">Study Mode</h2>
             <p className="mt-2 flex-1 text-muted-foreground">
               You study independently. Wunmi helps whenever you ask.
             </p>
@@ -96,7 +96,7 @@ function ModePage() {
               type="button"
               disabled={busy !== null}
               onClick={() => chooseMode("study")}
-              className="mt-6 w-full rounded-xl border border-primary px-4 py-3 font-semibold text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+              className="mt-6 w-full rounded-xl bg-accent px-4 py-3 font-semibold text-white transition-colors hover:bg-accent/90 disabled:opacity-60 font-heading"
             >
               {busy === "study" ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : "I am already studying"}
             </button>

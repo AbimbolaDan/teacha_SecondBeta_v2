@@ -93,7 +93,7 @@ function Onboarding() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
-        <h1 className="text-center text-5xl font-bold tracking-tight text-foreground">Teacha</h1>
+        <h1 className="text-center text-5xl font-bold tracking-tight text-foreground font-heading">Teacha</h1>
         <p className="mt-3 text-center text-base text-muted-foreground">
           Welcome! Enter your tester code and details to begin.
         </p>
@@ -197,7 +197,7 @@ function Onboarding() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-primary px-4 py-3.5 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60"
+            className="w-full rounded-lg bg-primary px-4 py-3.5 text-base font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-60 font-heading"
           >
             {submitting ? "Checking…" : "Start studying"}
           </button>

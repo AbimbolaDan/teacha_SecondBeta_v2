@@ -53,11 +53,11 @@ function uploadIcon(type: string | null) {
 
 function CoverageBar({ concepts }: { concepts: string[] }) {
   return (
-    <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200">
+    <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
       {concepts.length > 0 && (
         <div className="flex h-full">
           {concepts.map((_, i) => (
-            <div key={i} className="h-full flex-1" style={{ backgroundColor: "#0D9488" }} />
+            <div key={i} className="h-full flex-1 bg-primary" />
           ))}
         </div>
       )}
@@ -241,12 +241,12 @@ function Library() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="mx-auto w-full max-w-lg px-4 pt-10">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Library</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground font-heading">Library</h1>
 
         <button
           type="button"
           onClick={() => navigate({ to: "/upload" })}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 font-heading"
         >
           <Plus className="h-5 w-5" />
           Add New Material
@@ -264,7 +264,7 @@ function Library() {
             <button
               type="button"
               onClick={() => navigate({ to: "/upload" })}
-              className="mt-4 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+              className="mt-4 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 font-heading"
             >
               Start a New Session
             </button>
@@ -391,17 +391,17 @@ function Library() {
       </div>
 
       {/* Bottom nav */}
-      <nav className="fixed inset-x-0 bottom-0 border-t border-border bg-background">
+      <nav className="fixed inset-x-0 bottom-0 bg-ink">
         <div className="mx-auto flex max-w-lg items-center justify-around py-2">
-          <Link to="/home" className="flex flex-col items-center gap-1 px-4 py-1 text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/home" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper/60 transition-colors hover:text-paper">
             <HomeIcon className="h-5 w-5" />
             <span className="text-xs font-medium">Home</span>
           </Link>
-          <Link to="/library" className="flex flex-col items-center gap-1 px-4 py-1 text-primary">
+          <Link to="/library" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper">
             <LibraryIcon className="h-5 w-5" />
             <span className="text-xs font-medium">Library</span>
           </Link>
-          <Link to="/profile" className="flex flex-col items-center gap-1 px-4 py-1 text-muted-foreground transition-colors hover:text-foreground">
+          <Link to="/profile" className="flex min-h-[44px] flex-col items-center gap-1 px-4 py-1 text-paper/60 transition-colors hover:text-paper">
             <User className="h-5 w-5" />
             <span className="text-xs font-medium">Profile</span>
           </Link>

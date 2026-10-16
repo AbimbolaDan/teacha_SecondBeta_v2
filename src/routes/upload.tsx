@@ -151,7 +151,7 @@ function UploadPage() {
         <Link to="/home" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Back
         </Link>
-        <h1 className="mt-4 text-3xl font-bold text-foreground">What are you studying tonight?</h1>
+        <h1 className="mt-4 text-3xl font-bold text-foreground font-heading">What are you studying tonight?</h1>
 
         {error && <p className="mt-4 rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">{error}</p>}
 
@@ -163,7 +163,7 @@ function UploadPage() {
               className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6 text-left transition-colors hover:border-primary"
             >
               <Smartphone className="h-8 w-8 text-primary" />
-              <span className="text-lg font-semibold text-foreground">Upload From Phone</span>
+              <span className="text-lg font-semibold text-foreground font-heading">Upload From Phone</span>
               <span className="text-sm text-muted-foreground">PDF, DOCX, text, or a photo of your notes (max 15MB)</span>
             </button>
             <button
@@ -172,7 +172,7 @@ function UploadPage() {
               className="flex flex-col items-start gap-3 rounded-2xl border border-border bg-card p-6 text-left transition-colors hover:border-primary"
             >
               <LibraryIcon className="h-8 w-8 text-primary" />
-              <span className="text-lg font-semibold text-foreground">Upload From Library</span>
+              <span className="text-lg font-semibold text-foreground font-heading">Upload From Library</span>
               <span className="text-sm text-muted-foreground">Pick something you've saved before</span>
             </button>
             <input
@@ -246,8 +246,8 @@ function UploadPage() {
               </p>
             )}
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <button type="button" onClick={() => setStep("name")} className="flex-1 rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90">Continue</button>
-              <button type="button" onClick={reset} className="flex-1 rounded-xl border border-border px-4 py-3 font-semibold text-foreground hover:bg-muted">Upload Something Else</button>
+              <button type="button" onClick={() => setStep("name")} className="flex-1 rounded-xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground hover:bg-primary/90 font-heading">Continue</button>
+              <button type="button" onClick={reset} className="flex-1 rounded-xl border border-border px-4 py-3.5 font-semibold text-foreground hover:bg-muted">Upload Something Else</button>
             </div>
           </div>
         )}
@@ -265,7 +265,7 @@ function UploadPage() {
               <span className="font-medium text-foreground">Save to my library</span>
               <Switch checked={save} onCheckedChange={setSave} />
             </label>
-            <button type="button" disabled={busy} onClick={finish} className="mt-6 w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60">
+            <button type="button" disabled={busy} onClick={finish} className="mt-6 w-full rounded-xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-heading">
               {busy ? "Saving…" : "Continue"}
             </button>
           </div>

@@ -32,6 +32,7 @@ export const Route = createFileRoute("/session")({
 
 const SESSION_MATERIAL_KEY = "teacha_session_material";
 const CURRENT_SESSION_KEY = "teacha_current_session";
+const PENDING_INITIAL_MESSAGE_KEY = "teacha_pending_initial_message";
 
 type ChatMessage = { id: string; role: "user" | "assistant"; content: string };
 
@@ -49,6 +50,7 @@ function SessionPage() {
   const [activeTab, setActiveTab] = useState<"material" | "wunmi">("material");
   const [askButton, setAskButton] = useState<{ x: number; y: number; text: string } | null>(null);
   const materialRef = useRef<HTMLDivElement>(null);
+  const pendingInitialRef = useRef<string | null>(null);
 
   useEffect(() => {
     const testerCode = localStorage.getItem("teacha_tester_code");
@@ -67,14 +69,56 @@ function SessionPage() {
         setSessionMode(res.session.sessionMode);
         setMessages(res.messages.map((m) => ({ id: m.id, role: m.role, content: m.content })));
         setLoaded(true);
+
+        const pendingMsg = sessionStorage.getItem(PENDING_INITIAL_MESSAGE_KEY);
+        if (pendingMsg && res.messages.length === 0) {
+          sessionStorage.removeItem(PENDING_INITIAL_MESSAGE_KEY);
+          pendingInitialRef.current = pendingMsg;
+        }
       })
       .catch((e: Error) => setError(e.message));
   }, [navigate]);
 
+  // Auto-send the pending initial message from the home screen.
+  useEffect(() => {
+    if (!loaded || !pendingInitialRef.current || sending || messages.length > 0) return;
+    const text = pendingInitialRef.current;
+    pendingInitialRef.current = null;
+    void sendInitialMessage(text);
+  }, [loaded, sending, messages.length]);
+
+  async function sendInitialMessage(text: string) {
+    const testerCode = localStorage.getItem("teacha_tester_code");
+    if (!testerCode) return;
+    setError(null);
+    setSending(true);
+    const studentMsg: ChatMessage = { id: `local-${Date.now()}`, role: "user", content: text };
+    const history = [studentMsg].map((m) => ({ role: m.role, content: m.content }));
+    setMessages((prev) => [...prev, studentMsg]);
+    try {
+      const res = await sendWunmiMessage({
+        testerCode,
+        sessionId,
+        sessionMode,
+        materialName: material?.materialName ?? null,
+        materialContent: material?.contentText ?? null,
+        history,
+      });
+      setMessages((prev) => [
+        ...prev,
+        { id: `local-a-${Date.now()}`, role: "assistant", content: res.reply },
+      ]);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Wunmi could not respond right now. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  }
+
   async function send() {
     const testerCode = localStorage.getItem("teacha_tester_code");
     const text = draft.trim();
-    if (!text || !material || !testerCode || sending) return;
+    if (!text || !testerCode || sending) return;
     setError(null);
     setSending(true);
     setDraft("");
@@ -90,8 +134,8 @@ function SessionPage() {
         testerCode,
         sessionId,
         sessionMode,
-        materialName: material.materialName,
-        materialContent: material.contentText,
+        materialName: material?.materialName ?? null,
+        materialContent: material?.contentText ?? null,
         history,
       });
       setMessages((prev) => [
@@ -107,7 +151,7 @@ function SessionPage() {
 
   async function end() {
     const testerCode = localStorage.getItem("teacha_tester_code");
-    if (!testerCode || !sessionId || !material || ending) return;
+    if (!testerCode || !sessionId || ending) return;
     setEnding(true);
     setError(null);
     try {
@@ -122,8 +166,8 @@ function SessionPage() {
         testerCode,
         sessionId,
         sessionMode,
-        materialName: material.materialName,
-        materialContent: material.contentText,
+        materialName: material?.materialName ?? null,
+        materialContent: material?.contentText ?? null,
         history,
       });
       setMessages((prev) => [
@@ -134,6 +178,7 @@ function SessionPage() {
       await endSession({ testerCode, sessionId });
       localStorage.removeItem(CURRENT_SESSION_KEY);
       sessionStorage.removeItem(SESSION_MATERIAL_KEY);
+      sessionStorage.removeItem(PENDING_INITIAL_MESSAGE_KEY);
       navigate({ to: "/confidence", search: { sessionId } });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not end this session. Please try again.");
@@ -178,7 +223,7 @@ function SessionPage() {
       </main>
     );
   }
-  if (!material) {
+  if (!loaded) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -187,11 +232,12 @@ function SessionPage() {
   }
 
   const isStudy = sessionMode === "study";
+  const hasMaterial = !!material;
 
   const header = (
     <header className="flex items-center gap-3 border-b border-border bg-card px-4 py-3">
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-base font-bold text-foreground font-heading">{material.materialName}</h1>
+        <h1 className="truncate text-base font-bold text-foreground font-heading">{material?.materialName ?? "Ask Wunmi"}</h1>
         <span className={`mt-0.5 inline-block rounded-full px-2 py-0.5 text-xs font-medium text-white ${isStudy ? "bg-accent" : "bg-primary"}`}>
           {isStudy ? "Study Mode" : "Learning Mode"}
         </span>
@@ -253,7 +299,7 @@ function SessionPage() {
     <main className="flex h-dvh flex-col bg-background">
       {header}
 
-      {isStudy ? (
+      {isStudy && hasMaterial ? (
         <>
           {/* Mobile tabs */}
           <div className="flex border-b border-border bg-card md:hidden">

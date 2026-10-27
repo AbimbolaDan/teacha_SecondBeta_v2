@@ -37,8 +37,8 @@ type SendWunmiInput = {
   testerCode: string;
   sessionId: string | null;
   sessionMode: "learning" | "study";
-  materialName: string;
-  materialContent: string;
+  materialName: string | null;
+  materialContent: string | null;
   history: { role: "user" | "assistant"; content: string }[];
 };
 
@@ -151,8 +151,8 @@ export async function sendWunmiMessage(input: SendWunmiInput): Promise<{ reply: 
       course: profile.course,
       year_level: profile.year_level,
     },
-    materialName: input.materialName,
-    materialContent: input.materialContent,
+    materialName: input.materialName ?? "",
+    materialContent: input.materialContent ?? "",
     sessionMode: input.sessionMode,
     pastSessions,
     history: input.history,

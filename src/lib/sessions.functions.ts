@@ -117,7 +117,7 @@ export async function getSessionChat(input: {
       }
     : null;
   const material = savedMaterial ?? (session.material_id === null ? data.fallbackMaterial : null);
-  if (!material) throw new Error("The study material for this session is unavailable.");
+  // Document-free sessions (no material and no fallback) are valid — material will be null.
 
   return {
     session: {

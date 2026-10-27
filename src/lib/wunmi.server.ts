@@ -41,11 +41,16 @@ export function buildSessionContext(args: {
       ? "Session mode: STUDY MODE. The student is studying independently and will ask for help when needed."
       : "Session mode: LEARNING MODE. Teach the student through this material.";
 
+  const hasMaterial = args.materialContent.trim().length > 0;
+  const materialBlock = hasMaterial
+    ? `Uploaded material: ${args.materialName}\n---BEGIN MATERIAL---\n${args.materialContent}\n---END MATERIAL---`
+    : "No uploaded material for this session. The student is asking a general academic question or requesting tutoring on a topic. Use your own knowledge to teach.";
+
   const preamble = [
     `Student profile:\nName: ${args.profile.name ?? "Unknown"}\nCourse: ${args.profile.course ?? "Unknown"}\nYear level: ${args.profile.year_level ?? "Unknown"}`,
     `Last three completed sessions:\n${past}`,
     modeNote,
-    `Uploaded material: ${args.materialName}\n---BEGIN MATERIAL---\n${args.materialContent}\n---END MATERIAL---`,
+    materialBlock,
   ].join("\n\n");
 
   const windowed = args.history.slice(-HISTORY_WINDOW);

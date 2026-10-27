@@ -1,9 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Home as HomeIcon, Library as LibraryIcon, User } from "lucide-react";
+import { Home as HomeIcon, Library as LibraryIcon, User, SendHorizonal, Loader2, BookOpen } from "lucide-react";
 import { z } from "zod";
 import { checkStoredTesterCode } from "@/lib/auth.functions";
 import { getTesterProfile, getRecentSessions, type RecentSession } from "@/lib/home.functions";
+import { startSession } from "@/lib/sessions.functions";
+import { listMaterials } from "@/lib/materials.functions";
+import { type PendingMaterial } from "@/lib/extract";
 
 export const Route = createFileRoute("/home")({
   validateSearch: z.object({ encouragement: z.string().optional() }),
@@ -48,6 +51,12 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+const CURRENT_SESSION_KEY = "teacha_current_session";
+const SESSION_MATERIAL_KEY = "teacha_session_material";
+const PENDING_INITIAL_MESSAGE_KEY = "teacha_pending_initial_message";
+
+type LibRow = { material_id: string; material_name: string; content_text: string | null; upload_type: string | null; word_count: number | null };
+
 function Home() {
   const navigate = useNavigate();
   const { encouragement } = Route.useSearch();
@@ -55,6 +64,13 @@ function Home() {
   const [sessions, setSessions] = useState<RecentSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEncouragement, setShowEncouragement] = useState(encouragement === "1" || encouragement === "thanks");
+  const [askText, setAskText] = useState("");
+  const [askBusy, setAskBusy] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
+  const [showLibPicker, setShowLibPicker] = useState(false);
+  const [library, setLibrary] = useState<LibRow[] | null>(null);
+  const [libLoading, setLibLoading] = useState(false);
+  const [selectedMaterial, setSelectedMaterial] = useState<LibRow | null>(null);
 
   useEffect(() => {
     if (!showEncouragement) return;
@@ -90,6 +106,59 @@ function Home() {
     })();
   }, [navigate]);
 
+  async function openLibPicker() {
+    if (library) {
+      setShowLibPicker(true);
+      return;
+    }
+    const testerCode = localStorage.getItem("teacha_tester_code");
+    if (!testerCode) return;
+    setLibLoading(true);
+    setShowLibPicker(true);
+    try {
+      const res = await listMaterials({ testerCode });
+      setLibrary(res.materials);
+    } catch {
+      setLibrary([]);
+    } finally {
+      setLibLoading(false);
+    }
+  }
+
+  async function submitAsk() {
+    const testerCode = localStorage.getItem("teacha_tester_code");
+    const text = askText.trim();
+    if (!testerCode || !text || askBusy) return;
+    setAskBusy(true);
+    setAskError(null);
+    try {
+      let materialId: string | null = null;
+      let fallbackMaterial: PendingMaterial | null = null;
+      if (selectedMaterial) {
+        materialId = selectedMaterial.material_id;
+        fallbackMaterial = {
+          materialId: selectedMaterial.material_id,
+          materialName: selectedMaterial.material_name,
+          contentText: selectedMaterial.content_text ?? "",
+          uploadType: selectedMaterial.upload_type ?? "library",
+          wordCount: selectedMaterial.word_count ?? 0,
+        };
+      }
+      const res = await startSession({ testerCode, materialId, sessionMode: "learning" });
+      localStorage.setItem(CURRENT_SESSION_KEY, res.sessionId);
+      if (fallbackMaterial) {
+        sessionStorage.setItem(SESSION_MATERIAL_KEY, JSON.stringify(fallbackMaterial));
+      } else {
+        sessionStorage.removeItem(SESSION_MATERIAL_KEY);
+      }
+      sessionStorage.setItem(PENDING_INITIAL_MESSAGE_KEY, text);
+      navigate({ to: "/session" });
+    } catch (e) {
+      setAskError(e instanceof Error ? e.message : "Could not start your session. Please try again.");
+      setAskBusy(false);
+    }
+  }
+
   const lastSession = sessions[0] ?? null;
   const recentThree = sessions.slice(0, 3);
 
@@ -116,6 +185,93 @@ function Home() {
         >
           Start New Session
         </button>
+
+        {/* Natural-language entry point */}
+        <section className="mt-6">
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold text-card-foreground">Ask Wunmi</h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Ask a question, request tutoring on a topic, or pick from your library.
+            </p>
+            {askError && (
+              <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{askError}</p>
+            )}
+            <div className="mt-3 flex items-end gap-2">
+              <textarea
+                value={askText}
+                onChange={(e) => setAskText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    void submitAsk();
+                  }
+                }}
+                placeholder="What would you like to learn or study today?"
+                rows={2}
+                className="max-h-32 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              />
+              <button
+                type="button"
+                onClick={() => void submitAsk()}
+                disabled={askBusy || !askText.trim()}
+                aria-label="Send to Wunmi"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                {askBusy ? <Loader2 className="h-5 w-5 animate-spin" /> : <SendHorizonal className="h-5 w-5" />}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={openLibPicker}
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary transition-colors hover:text-primary/80"
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              {selectedMaterial ? selectedMaterial.material_name : "Use a document from your Library"}
+            </button>
+            {showLibPicker && (
+              <div className="mt-2 max-h-48 overflow-y-auto rounded-lg border border-border bg-background">
+                {libLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : !library || library.length === 0 ? (
+                  <p className="px-3 py-3 text-xs text-muted-foreground">
+                    Your library is empty. Upload a document first or ask without one.
+                  </p>
+                ) : (
+                  <ul className="py-1">
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedMaterial(null);
+                          setShowLibPicker(false);
+                        }}
+                        className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${!selectedMaterial ? "font-semibold text-primary" : "text-foreground"}`}
+                      >
+                        No document (general question)
+                      </button>
+                    </li>
+                    {library.map((m) => (
+                      <li key={m.material_id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedMaterial(m);
+                            setShowLibPicker(false);
+                          }}
+                          className={`w-full truncate px-3 py-2 text-left text-sm transition-colors hover:bg-muted ${selectedMaterial?.material_id === m.material_id ? "font-semibold text-primary" : "text-foreground"}`}
+                        >
+                          {m.material_name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        </section>
 
         <section className="mt-8">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">

@@ -277,7 +277,7 @@ function SessionPage() {
       className="relative flex-1 overflow-y-auto px-5 py-5"
     >
       <article className="mx-auto max-w-2xl text-[15px] leading-7 text-foreground sm:text-base sm:leading-8">
-        <p className="whitespace-pre-wrap">{material.contentText}</p>
+        <p className="whitespace-pre-wrap">{material?.contentText ?? "No uploaded material for this session."}</p>
       </article>
       {askButton && (
         <button

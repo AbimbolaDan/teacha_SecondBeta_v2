@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BookOpen, Loader2, MessageCircle, SendHorizonal, Sparkles } from "lucide-react";
+import { ChevronDown, Loader2, MessageCircle, SendHorizonal, Sparkles } from "lucide-react";
 import { type PendingMaterial } from "@/lib/extract";
 import { getSessionChat, endSession } from "@/lib/sessions.functions";
 import { sendWunmiMessage } from "@/lib/wunmi.functions";
@@ -16,6 +16,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 
 export const Route = createFileRoute("/session")({
   head: () => ({
@@ -48,7 +54,7 @@ function SessionPage() {
   const [ending, setEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [activeTab, setActiveTab] = useState<"material" | "wunmi">("material");
+  const [chatOpen, setChatOpen] = useState(false);
   const [askButton, setAskButton] = useState<{ x: number; y: number; text: string } | null>(null);
   const materialRef = useRef<HTMLDivElement>(null);
   const pendingInitialRef = useRef<string | null>(null);
@@ -226,7 +232,7 @@ function SessionPage() {
     setDraft(`I need help understanding this: ${askButton.text}`);
     setAskButton(null);
     window.getSelection()?.removeAllRanges();
-    setActiveTab("wunmi");
+    setChatOpen(true);
   }
 
   if (error && !loaded) {
@@ -287,7 +293,7 @@ function SessionPage() {
       ref={materialRef}
       onMouseUp={handleMaterialMouseUp}
       onTouchEnd={handleMaterialMouseUp}
-      className="relative flex-1 overflow-y-auto px-5 py-5"
+      className="relative flex-1 overflow-y-auto px-5 pt-5 pb-24 md:py-5"
     >
       <article className="mx-auto max-w-2xl text-[15px] leading-7 text-foreground sm:text-base sm:leading-8">
         <p className="whitespace-pre-wrap">{material?.contentText ?? "No uploaded material for this session."}</p>
@@ -314,40 +320,43 @@ function SessionPage() {
 
       {isStudy && hasMaterial ? (
         <>
-          {/* Mobile tabs */}
-          <div className="flex border-b border-border bg-card md:hidden">
+          {/* Mobile: material panel always mounted, chat in bottom drawer */}
+          <div className="flex min-h-0 flex-1 flex-col md:hidden">
+            {materialPanel}
+          </div>
+
+          {/* Floating chat button — mobile Study Mode, drawer closed */}
+          {!chatOpen && (
             <button
               type="button"
-              onClick={() => setActiveTab("material")}
-              className={`flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${
-                activeTab === "material"
-                  ? "border-b-2 border-primary text-foreground"
-                  : "text-muted-foreground"
-              }`}
-            >
-              <BookOpen className="h-4 w-4" />
-              Your Material
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("wunmi")}
-              className={`flex flex-1 items-center justify-center gap-2 px-4 py-3 text-sm font-semibold transition-colors ${
-                activeTab === "wunmi"
-                  ? "border-b-2 border-primary text-foreground"
-                  : "text-muted-foreground"
-              }`}
+              onClick={() => setChatOpen(true)}
+              className="fixed bottom-6 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-lg transition-transform hover:scale-105 active:scale-95 md:hidden"
             >
               <MessageCircle className="h-4 w-4" />
-              Wunmi
+              Ask Wunmi
             </button>
-          </div>
+          )}
 
-          {/* Mobile: tabbed panels */}
-          <div className="flex min-h-0 flex-1 flex-col md:hidden">
-            {activeTab === "material" ? materialPanel : chatPanel}
-          </div>
+          {/* Mobile chat drawer — overlays material, material stays mounted underneath */}
+          <Drawer open={chatOpen} onOpenChange={setChatOpen} shouldScaleBackground={false}>
+            <DrawerContent className="mx-auto h-[85dvh] max-h-[85dvh] md:hidden">
+              <div className="flex items-center justify-between border-b border-border px-4 pb-2 pt-1">
+                <DrawerTitle className="text-sm font-semibold text-foreground">Wunmi</DrawerTitle>
+                <DrawerClose asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Close chat"
+                  >
+                    <ChevronDown className="h-5 w-5" />
+                  </button>
+                </DrawerClose>
+              </div>
+              {chatPanel}
+            </DrawerContent>
+          </Drawer>
 
-          {/* Desktop: side-by-side 55/45 */}
+          {/* Desktop: side-by-side 55/45 — unchanged */}
           <div className="hidden min-h-0 flex-1 md:flex">
             <div className="flex w-[55%] flex-col border-r border-border">{materialPanel}</div>
             <div className="flex w-[45%] flex-col">{chatPanel}</div>

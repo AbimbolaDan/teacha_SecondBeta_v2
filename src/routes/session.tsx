@@ -4,6 +4,7 @@ import { BookOpen, Loader2, MessageCircle, SendHorizonal, Sparkles } from "lucid
 import { type PendingMaterial } from "@/lib/extract";
 import { getSessionChat, endSession } from "@/lib/sessions.functions";
 import { sendWunmiMessage } from "@/lib/wunmi.functions";
+import { logEvent, logError } from "@/lib/event-tracking";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,13 +71,20 @@ function SessionPage() {
         setMessages(res.messages.map((m) => ({ id: m.id, role: m.role, content: m.content })));
         setLoaded(true);
 
+        if (res.messages.length > 0) {
+          logEvent({ eventType: "session_resumed", testerCode, sessionId: sid });
+        }
+
         const pendingMsg = sessionStorage.getItem(PENDING_INITIAL_MESSAGE_KEY);
         if (pendingMsg && res.messages.length === 0) {
           sessionStorage.removeItem(PENDING_INITIAL_MESSAGE_KEY);
           pendingInitialRef.current = pendingMsg;
         }
       })
-      .catch((e: Error) => setError(e.message));
+      .catch((e: Error) => {
+        setError(e.message);
+        logError({ category: "database", feature: "session_load", userFacingError: e.message, testerCode, sessionId: sid });
+      });
   }, [navigate]);
 
   // Auto-send the pending initial message from the home screen.
@@ -110,6 +118,7 @@ function SessionPage() {
       ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Wunmi could not respond right now. Please try again.");
+      logError({ category: "ai", feature: "wunmi_initial_message", userFacingError: e instanceof Error ? e.message : String(e), testerCode, sessionId });
     } finally {
       setSending(false);
     }
@@ -129,6 +138,7 @@ function SessionPage() {
     };
     const history = [...messages, studentMsg].map((m) => ({ role: m.role, content: m.content }));
     setMessages((prev) => [...prev, studentMsg]);
+    logEvent({ eventType: "session_message_sent", testerCode, sessionId, materialId: material?.materialId ?? null });
     try {
       const res = await sendWunmiMessage({
         testerCode,
@@ -144,6 +154,7 @@ function SessionPage() {
       ]);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Wunmi could not respond right now. Please try again.");
+      logError({ category: "ai", feature: "wunmi_message", userFacingError: e instanceof Error ? e.message : String(e), testerCode, sessionId });
     } finally {
       setSending(false);
     }
@@ -176,6 +187,7 @@ function SessionPage() {
       ]);
 
       await endSession({ testerCode, sessionId });
+      logEvent({ eventType: "session_completed", testerCode, sessionId, materialId: material?.materialId ?? null });
       localStorage.removeItem(CURRENT_SESSION_KEY);
       sessionStorage.removeItem(SESSION_MATERIAL_KEY);
       sessionStorage.removeItem(PENDING_INITIAL_MESSAGE_KEY);
@@ -183,6 +195,7 @@ function SessionPage() {
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not end this session. Please try again.");
       setEnding(false);
+      logError({ category: "database", feature: "session_end", userFacingError: e instanceof Error ? e.message : String(e), testerCode, sessionId });
     }
   }
 

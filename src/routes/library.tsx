@@ -17,6 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { checkStoredTesterCode } from "@/lib/auth.functions";
 import { PENDING_KEY, type PendingMaterial } from "@/lib/extract";
+import { logEvent } from "@/lib/event-tracking";
 
 export const Route = createFileRoute("/library")({
   head: () => ({
@@ -91,6 +92,7 @@ function Library() {
         return;
       }
 
+      logEvent({ eventType: "library_opened", testerCode });
       const { data: rows, error: matError } = await supabase
         .from("materials")
         .select("material_id, material_name, upload_type, word_count, created_at, content_text")
@@ -128,6 +130,7 @@ function Library() {
   }, [loadLibrary]);
 
   function startWithMaterial(m: MaterialRow) {
+    logEvent({ eventType: "material_selected", testerCode: localStorage.getItem("teacha_tester_code"), materialId: m.material_id });
     const pending: PendingMaterial = {
       materialId: m.material_id,
       materialName: m.material_name,

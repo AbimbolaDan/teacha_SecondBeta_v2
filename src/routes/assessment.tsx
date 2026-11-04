@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { z } from "zod";
 import { generateAssessment, submitAssessmentAnswer } from "@/lib/assessment.functions";
+import { logEvent, logError } from "@/lib/event-tracking";
 
 export const Route = createFileRoute("/assessment")({
   validateSearch: z.object({ sessionId: z.string().uuid() }),

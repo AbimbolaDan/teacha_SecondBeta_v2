@@ -263,7 +263,11 @@ function UploadPage() {
             />
             <label className="mt-5 flex items-center justify-between gap-3">
               <span className="font-medium text-foreground">Save to my library</span>
-              <Switch checked={save} onCheckedChange={setSave} />
+              <Switch
+                checked={save}
+                onCheckedChange={setSave}
+                aria-label="Save material to my library"
+              />
             </label>
             <button type="button" disabled={busy} onClick={finish} className="mt-6 w-full rounded-xl bg-primary px-4 py-3.5 font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60 font-heading">
               {busy ? "Saving…" : "Continue"}
